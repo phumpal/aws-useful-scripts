@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# enable multiverse, unless it already is
+has_multi=`grep multiverse /etc/apt/sources.list`
+
+if [ "" = "$has_multi" ] ; then
+   echo "deb http://us.archive.ubuntu.com/ubuntu/ lucid multiverse" >> /etc/apt/sources.list
+   echo "deb-src http://us.archive.ubuntu.com/ubuntu/ lucid multiverse" >> /etc/apt/sources.list
+   echo "deb http://us.archive.ubuntu.com/ubuntu/ lucid-updates multiverse" >> /etc/apt/sources.list
+   echo "deb-src http://us.archive.ubuntu.com/ubuntu/ lucid-updates multiverse" >> /etc/apt/sources.list
+   sudo apt-get -y update
+fi 
