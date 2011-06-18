@@ -1,0 +1,36 @@
+#!/bin/bash
+volumes=10
+size=10
+mountpoint=/var/lib/mongodb
+raid_array_location=/dev/md0
+raid_level=10
+raid_layout=f2
+raid_chunk=256
+
+sudo service mongodb stop
+#sudo rm -rf $mountpoint
+
+devices=$(perl -e 'for$i("h".."k"){for$j("",1..15){print"/dev/sd$i$j\n"}}'|head -$volumes)
+
+yes | sudo mdadm \
+--create $raid_array_location \
+--chunk=$raid_chunk \
+--level=$raid_level \
+--layout=$raid_layout \
+--metadata=1.1 \
+--raid-devices $volumes \
+$devices
+
+echo DEVICE $devices       | sudo tee    /etc/mdadm.conf
+sudo mdadm --detail --scan | sudo tee -a /etc/mdadm.conf
+
+sudo mkfs.xfs $raid_array_location
+
+echo "$raid_array_location $mountpoint xfs noatime 0 0" | sudo tee -a /etc/fstab
+#sudo mkdir $mountpoint
+sudo mount $mountpoint
+
+sudo rm -rf /var/lib/mongodb/mongod.lock
+sudo chown -R mongodb:mongodb /var/lib/mongodb/
+sudo -u mongodb mongod -f /etc/mongodb.conf --repair
+sudo service mongodb start

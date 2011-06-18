@@ -1,0 +1,38 @@
+#!/bin/bash
+export EC2_HOME=~/project-dir/.ec2
+export PATH=$PATH:$EC2_HOME/bin
+export EC2_PRIVATE_KEY=`ls $EC2_HOME/pk-yourpkfileinfohere.pem`
+export EC2_CERT=`ls $EC2_HOME/cert-youcertfileinfohere.pem`
+
+#Set appropriate variables for stage1
+instanceid=`knife node list`
+aws_ip_address='ec2-ww-xx-yy-zz.us-west-1.compute.amazonaws.com'
+
+ssh -F .ssh/config ubuntu@$aws_ip_address 'sudo apt-get update --assume-yes --quiet && 1 | sudo apt-get install -y --assume-yes mdadm xfsprogs'
+
+echo "Setting variables and creating EBS volumes"
+volumes=10
+size=10
+
+devices=$(perl -e 'for$i("h".."k"){for$j("",1..15){print"/dev/sd$i$j\n"}}'|
+           head -$volumes)
+devicearray=($devices)
+volumeids=
+i=1
+while [ $i -le $volumes ]; do
+  volumeid=$(ec2-create-volume -K $EC_PRIVATE_KEY -C $EC2_CERT --region us-west-1 --availability-zone us-west-1a --size $size | cut -f2)
+  echo "$i: created  $volumeid"
+  device=${devicearray[$(($i-1))]}
+  ec2-attach-volume -K $EC2_PRIVATE_KEY -C $EC_CERT --device $device --instance $instanceid $volumeid --region us-west-1
+  volumeids="$volumeids $volumeid"
+  let i=i+1
+done
+echo "volumeids='$volumeids'"
+
+# Configuring RAID
+echo "Copying raid setup script"
+scp -F .ssh/config ~/project-dir/raid_setup ubuntu@$aws_ip_address:/home/ubuntu/
+
+echo "Configuring RAID 10"
+ssh -F .ssh/config ubuntu@$aws_ip_address 'sudo chmod +x ~/raid_setup | sudo ./raid_setup'
+
