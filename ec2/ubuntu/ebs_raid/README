@@ -34,9 +34,18 @@ Assumptions:
 
 
 Configuration
-============
+=============
 
 You'll need to run the initial script on your local machine which copies and executes the raid_setup script to your EC2 instance
 
 
+Current
+=======
 
+The current configuration is for RAID10 and mongodb mounting to
+
+`````
+/var/lib/mongodb/
+`````
+
+This should be changed to fit your instance. The last five line fix the mongodb installation before restarting the service.
