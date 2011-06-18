@@ -1,0 +1,24 @@
+k#! /bin/sh
+ 
+case "$1" in
+  start)
+    /usr/local/nodejs/nodeapp start > /var/log/nodeapp.log 2> /var/log/nodeapp.err
+    ;;
+  stop)
+    /usr/local/nodejs/nodeapp stop
+    ;;
+  restart)
+    /usr/local/nodejs/nodeapp stop
+    /usr/local/nodejs/nodeapp start > /var/log/nodeapp.log 2> /var/log/nodeapp.err
+    ;;
+ 
+  force-reload)
+    # No-op
+    ;;
+  *)
+    echo "Usage: nodeapp {start|stop|restart|force-reload}" >&2
+    exit 3
+    ;;
+esac
+ 
+:
